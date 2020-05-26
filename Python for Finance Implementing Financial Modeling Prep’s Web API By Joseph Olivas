@@ -1,0 +1,167 @@
+<center>
+
+# Python for Finance
+
+## Implementing Financial Modeling Prep's Web API
+
+### By: Joseph Olivas
+
+</center>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; The recent COVID-19 pandemic has plunged the global economy into what experts are deeming the biggest crisis since the 1930’s Great Depression. March began the beginnings of mass closures of privately-owned businesses, a surge of 22 million Americans filing for unemployment, and an accumulation surge of government debts higher than has ever been seen  in history.
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; However, since the initial market crash at the beginning of 2020, stocks have risen on average by a shocking 25%, leading investors worldwide torn with regards to future global stock market prosperity in spite of current volatility.
+
+<center>
+
+![](https://i.imgur.com/PFw4ffE.jpg)
+
+</center>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Thankfully, several websites offer free stock information through the use of APIs intended to facilitate the implementation of financial data within the user’s code.
+So, whether you’re looking to step up your stock prediction game in preparation for the anticipated economic recovery or simply interested in COVID-19’s global impact on stock markets, I would like to take you through the process of creating a user-friendly program to visualize financial data with Python, Pandas, and Plotly.
+
+<center>
+
+<div style="width:350px; height:100px">
+
+![](https://i.imgur.com/xZxLwMF.png)
+
+</div>
+
+</center>
+ 
+<br />
+<br />
+<br />
+<br />
+<br />
+<br />
+<br />
+<br />
+<br />
+<br />
+<br />
+<br />
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; First, we will begin exploring [Financial Modeling Prep’s](https://financialmodelingprep.com/) home page. Here, we can view basic data visualizations for various stocks as well as real-time market updates and related news articles. At the top of the page, we can see a link to the API documentation, which will take us to a page that explains what APIs are being offered and how to use them.  
+<br />
+
+<center>
+
+![](https://i.imgur.com/y9LEIr4.png)
+
+</center>
+
+<br />
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; We are presented with a list of Financial Modeling Prep’s RESTful web APIs. These APIs allow our client to make http requests to their web server, which will analyze our request and return the corresponding data. What’s convenient about these APIs is they don’t require an OAuth token to use, so no account or token request is needed.
+ 
+![](https://i.imgur.com/gxqKnj1.png)
+ <br />
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Today we’ll be using their historical daily price API to analyze how the open price has changed in the past 300 days.
+ 
+![](https://i.imgur.com/irk70vi.png)
+ 
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Now that we understand a bit about the API that we’re working with, we can move on to implementing it into a python program. First, let’s begin by importing the plotly, pandas, requests, and json packages. These will allow us to fetch the data from Financial Modeling Prep with our API easily and efficiently. Pandas is an open source library with readily available tools for creating data structures and analyzing data which runs on top of plotly, a tool we will use to create candlestick charts to visualize our data. 
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Requests is an http library which facilitates http requests from client to web servers, and we will modify our output into json format for clear visualization by pandas. All of these libraries support python 2.7 and 3.4-3.7. Be sure to pip install any libraries not already on your device, and conda install pandas if you’re using Anaconda. If you’re a first-time user of these libraries, you can find the relevant documentation below.
+ <center>
+ 
+ [Pandas](https://github.com/pandas-dev/pandas/blob/v1.0.3/pandas/core/frame.py#L319-L8446)
+[Plotly](https://plotly.com/python-api-reference/generated/plotly.graph_objects.Figure.html)
+
+ </center>
+
+
+    > import plotly.express as px
+    > import plotly.graph_objects as go
+    > import pandas as pd
+    > import requests
+    > import json
+    
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Looking back at our http get request we see that the two required variables that we need to specify are the ticker and time series, as well as the endpoint that we are trying to fetch data from. All publicly traded shares have ticker symbols, which are 3 or 4 number or letter abbreviations to uniquely identify different shares. The time series variable will allow us to fetch data from a specified number of days until the present. Note that the endpoint is not included in this http get request.
+
+<center>
+
+![](https://i.imgur.com/CAsQT6F.png)
+
+</center>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Implementing a bit of human centered design into our program will allow us to easily fetch data from different stocks through different time periods in order to compare them by asking the user to input initial parameters every time we run our program.
+
+    quote = input("Enter a stock ticker symbol:\n")
+    days = int(input("Enter how far back to fetch data(in days):\n"))
+    
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Now we can create a function that passes through our get request. Notice that we have to convert the output to json so that we can both see our data in a pandas-generated chart and to facilitate plotly’s implementation of our data.
+
+    def candlestick(quote,days):
+    r = requests.get(f'https://financialmodelingprep.com/api/v3/historical-price-full/{quote}?timeseries={days}')
+    r = r.json()
+    return r
+    
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; We can now parse our variable r to extract the ‘historical’ key, which we then store as the variable stock data and then clean up with the pandas dataframe. 
+
+
+    r = candlestick(quote, days)
+
+    stockdata = r['historical']
+    stockdata_df = pd.DataFrame(stockdata)
+    print(stockdata_df)
+    
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Running this returns our data as a 300 element list, with each element representing a dictionary containing open, high, volume-weighted average price, and a few other variables that have been condensed. Depending on when you’re reading this, your output data will be scaled forward accordingly.
+
+![](https://i.imgur.com/yZzJB92.png)
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; We can now graph this data with a candlestick chart provided by plotly. We compile our data points into an object that we call `fig()`. Extract each column vector of data that we wish to plot, in this case the date, open, high, low, and close sets for the past 300 days. If you don’t already know why opening price is a valuable data point to plot with time, see below for the relevant documentation.
+
+<center>
+
+[Investopedia: Opening Price](https://www.investopedia.com/terms/o/openingprice.asp)
+
+</center>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; We can then modify our graph to our desires using plotly’s .update_layout, including text color, font, and spacing. Feel free to play around with the several features of `.update_layout` to suit your formatting desires. `fig.show()` will open the candlestick chart in a new tab in your browser
+
+    fig = go.Figure(data=[go.Candlestick(
+                x=stockdata_df['date'],
+                open=stockdata_df['open'],
+                high=stockdata_df['high'],
+                low=stockdata_df['low'],
+                close=stockdata_df['close'])])
+    fig.update_layout(
+    title= {
+        'text': quote,
+      'y':0.9,
+        'x':0.5,
+        'xanchor': 'center',
+        'yanchor': 'top'},
+      font=dict(
+        family="Courier New, monospace",
+        size=18,
+        color="#a3174d"
+    )
+    )
+    fig.show()
+
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Now all that’s left to do is run your program with any ticker symbol and time series you desire. I’ve chosen to view AAPL (Apple Inc.) open prices for the past 300 days. And there you have it! If you’ve made it to this point, than you should be be viewing a graph resembling the one below.
+<br />
+
+![](https://i.imgur.com/9DLRPa9.png)
+
+<br />
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Visualizing data in this way is extremely useful in any situation because it allows us to easily get an intuitive understanding of real life phenomena that would otherwise be left in the form of csv files or data charts. In the graph above, we can see how opening prices of Apple stocks have been affected by the COVID-19 pandemic. 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Clearly, we can see that early February, the beginnings of the pandemic in the United States, would have been a really terrible time to start taking an interest in Apple stocks. Similarly, we know that people who invested at the end of March, when stocks began to rise again, must be very happy with their foresight. Running our program again with Tesla Inc. (TSLA) reveals similar trends.
+<br />
+
+
+![](https://i.imgur.com/zJy4Xry.png)
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; And that’s all there is to it! Investors all over the globe are using similar data visualization processes, albeit more complex, to analyze historical market trends in hopes of making accurate models for the future. Now that you understand how to fetch data using web APIs and create your graphs to display them, you can start getting a better understanding of the world of finances and APIs.
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; I encourage you to play around with other APIs and data visualization tools to find what works best for you- who knows, maybe one day your knowledge of data science practices could make you very rich And if that happens, don’t forget who showed you how to take your first steps!
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Happy coding:)
+
